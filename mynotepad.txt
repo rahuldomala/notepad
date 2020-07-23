@@ -1,0 +1,404 @@
+package rahuldomala;
+
+import javax.swing.JFrame;
+import javax.swing.JTextArea;
+import java.awt.*;
+import static java.awt.Font.BOLD;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.KeyEvent;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.Reader;
+import java.util.StringTokenizer;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import javax.swing.AbstractAction;
+import javax.swing.Action;
+import javax.swing.JCheckBoxMenuItem;
+import javax.swing.JFileChooser;
+import javax.swing.JScrollPane;
+import javax.swing.JMenuBar;
+import javax.swing.JMenuItem;
+import javax.swing.JMenu;
+import javax.swing.KeyStroke;
+import javax.swing.event.UndoableEditEvent;
+import javax.swing.event.UndoableEditListener;
+import javax.swing.undo.CannotRedoException;
+import javax.swing.undo.CannotUndoException;
+import javax.swing.undo.UndoManager;
+import javax.swing.JOptionPane;
+public final class rahuldomala extends JFrame {
+
+    static JTextArea mainarea;
+    JMenuBar m;
+    JMenu mnuFile, mnuEdit, mnuFormat, mnuHelp;
+    JMenuItem itmNew, itmRedo, itmOpen, itmSave, itmSaveas, itmExit,itmUndo,itmCut, itmCopy, itmPaste;
+    JCheckBoxMenuItem wordWrap;
+    String filename;
+    JFileChooser jc;
+    String fileContent;
+    UndoManager undo;
+    UndoAction undoAction;
+    RedoAction redoAction;
+    public rahuldomala() {
+
+        ps();
+        itmSave.addActionListener((ActionEvent e) -> {
+            try {
+                save();
+            } catch (IOException ex) {
+                Logger.getLogger(rahuldomala.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        });
+        itmSaveas.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionListener e) {
+                Saveas();
+            }
+
+            private void Saveas() {
+                throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+            }
+
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+            }
+        });
+        itmOpen.addActionListener((ActionEvent e) -> {
+            try {
+                open();
+            } catch (IOException ex) {
+                Logger.getLogger(rahuldomala.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        });
+        itmNew.addActionListener((ActionEvent e) -> {
+            try {
+                open_new();
+            } catch (IOException ex) {
+                Logger.getLogger(rahuldomala.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        });
+        itmExit.addActionListener((ActionEvent e) -> {
+            System.exit(0);
+        });
+        itmCopy.addActionListener((ActionEvent e) -> {
+            mainarea.copy();
+        });
+        itmCut.addActionListener((ActionEvent e) -> {
+            mainarea.cut();
+        });
+        itmPaste.addActionListener((ActionEvent e) -> {
+            mainarea.paste();
+        });
+        mainarea.getDocument().addUndoableEditListener(new UndoableEditListener() {
+            @Override
+            public void undoableEditHappened(UndoableEditEvent e) {
+                undo.addEdit(e.getEdit());
+                undoAction.update();
+                redoAction.update();
+            }
+        });
+        
+       // mainarea.setWrapStyleWord(true);
+        wordWrap.addActionListener((ActionEvent e) -> {
+            if(wordWrap.isSelected()){
+                mainarea.setLineWrap(true);
+                mainarea.setWrapStyleWord(true);
+            }
+            else{
+                mainarea.setLineWrap(false);
+                mainarea.setWrapStyleWord(false);
+            }
+        });
+    }
+
+    public void ps() {
+        jc = new JFileChooser(".txt");
+        mainarea = new JTextArea();
+        undo = new UndoManager();
+     //   ImageIcon iconUndo = new ImageIcon(getClass().getResource("/img/undo.png"));
+       // ImageIcon iconRedo = new ImageIcon(getClass().getResource("/img/redo.png"));
+        mainarea.setBackground(Color.WHITE);
+        mainarea.setForeground(Color.BLACK);
+        undoAction = new UndoAction();
+        redoAction = new RedoAction();
+
+        mainarea.setFont(new Font("Rockwell Nova", BOLD, 20));
+        getContentPane().add(mainarea);
+        getContentPane().add(new JScrollPane(mainarea), BorderLayout.CENTER);
+        setTitle("Untitled-Notepad");
+        setSize(800, 600);
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        //menubar
+        m = new JMenuBar();
+        // m.setBackground(Color.yellow);
+        //menu
+        mnuFile = new JMenu("File");
+        //mnuFile.setForeground(Color.RED);
+        mnuFile.setFont(new Font("Gill Sans MT Condensed", BOLD, 15));
+        mnuEdit = new JMenu("Edit");
+        //mnuEdit.setForeground(Color.RED);
+        mnuEdit.setFont(new Font("Gill Sans MT Condensed", BOLD, 15));
+        mnuFormat = new JMenu("Format");
+        // mnuFormat.setForeground(Color.RED);
+        mnuFormat.setFont(new Font("Gill Sans MT Condensed", BOLD, 15));
+        mnuHelp = new JMenu("Help");
+        //mnuHelp.setForeground(Color.RED);
+        mnuHelp.setFont(new Font("Gill Sans MT Condensed", BOLD, 15));
+        //menu items
+        itmNew = new JMenuItem("New");
+        itmNew.setFont(new Font("Papyrus", BOLD, 10));
+        itmOpen = new JMenuItem("Open");
+        itmOpen.setFont(new Font("Papyrus", BOLD, 10));
+        itmSave = new JMenuItem("Save");
+        itmSave.setFont(new Font("Papyrus", BOLD, 10));
+        itmSaveas = new JMenuItem("Saveas");
+        itmSaveas.setFont(new Font("Papyrus", BOLD, 10));
+        //itmSaveas.setBackground(Color.GREEN);
+        itmExit = new JMenuItem("Exit");
+        itmExit.setFont(new Font("Papyrus", BOLD, 10));
+        //itmExit.setBackground(Color.GREEN);
+        //edit items
+        itmUndo = new JMenuItem("Undo");
+        itmUndo.setFont(new Font("Papyrus", BOLD, 10));
+        //itmUndo.setBackground(Color.RED);
+        itmCut = new JMenuItem("Cut");
+        itmCut.setFont(new Font("Papyrus", BOLD, 10));
+        //itmCut.setBackground(Color.RED);
+        itmCopy = new JMenuItem("Copy");
+        itmCopy.setFont(new Font("Papyrus", BOLD, 10));
+        //itmCopy.setBackground(Color.GREEN);
+        itmPaste = new JMenuItem("Paste");
+        itmPaste.setFont(new Font("Papyrus", BOLD, 10));
+        
+        //itmPaste.setBackground(Color.RED);
+  
+        itmRedo = new JMenuItem("Redo");
+        itmRedo.setFont(new Font("Papyrus", BOLD, 10));
+        wordWrap =new JCheckBoxMenuItem("word Wrap");
+        wordWrap.setFont(new Font("Papyrus", BOLD, 10));
+        //itmRedo.setBackground(Color.GREEN);
+        //adding shortcuts
+        itmNew.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_N, ActionEvent.CTRL_MASK));
+        //itmNew.setBackground(Color.GREEN)
+        itmSave.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, ActionEvent.CTRL_MASK));
+        //itmSave.setBackground(Color.RED);
+        itmOpen.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_O, ActionEvent.CTRL_MASK));
+        //itmOpen.setBackground(Color.RED);
+        itmExit.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_Z, ActionEvent.CTRL_MASK));
+        itmCopy.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_C, ActionEvent.CTRL_MASK));
+        itmCut.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_X, ActionEvent.CTRL_MASK));
+        itmPaste.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_V, ActionEvent.CTRL_MASK));
+        //add menu files
+        mnuFile.add(itmNew);
+        mnuFile.add(itmOpen);
+        mnuFile.add(itmSaveas);
+        mnuEdit.add(undoAction);
+        mnuEdit.add(redoAction);
+        mnuEdit.add(itmCut);
+        
+        mnuEdit.add(itmCopy);
+        mnuEdit.add(itmPaste);
+        mnuFile.add(itmSave);
+        mnuFile.add(itmExit);
+        mnuFormat.add(wordWrap);
+        // add menu item to menu bar
+        m.add(mnuFile);
+        m.add(mnuEdit);
+        m.add(mnuFormat);
+        m.add(mnuHelp);
+        // add menu bar to jframe
+        setJMenuBar(m);
+        setVisible(true);
+    }
+
+    private void save() throws IOException {
+
+        PrintWriter fout = null;
+        int retval = -1;
+        try {
+            if (filename == null) {
+                SaveAs();
+                retval = jc.showSaveDialog(this);
+                if (retval == JFileChooser.APPROVE_OPTION) {
+                    fout = new PrintWriter(new FileWriter(jc.getSelectedFile()));
+                }
+
+                String s = mainarea.getText();
+                StringTokenizer st;
+                st = new StringTokenizer(s, System.getProperty("line.separator"));
+                while (st.hasMoreElements()) {
+                    fout.println(st.nextToken());
+                }
+                JOptionPane.showMessageDialog(rootPane, "File Saved");
+                filename = jc.getSelectedFile().getName();
+                setTitle(filename = jc.getSelectedFile().getName());
+            } else {
+                fout = new PrintWriter(new FileWriter(filename));
+                String s = mainarea.getText();
+                StringTokenizer st;
+                st = new StringTokenizer(s, System.getProperty("line.separator"));
+                while (st.hasMoreElements()) {
+                    fout.println(st.nextToken());
+                }
+                JOptionPane.showMessageDialog(rootPane, "File Saved");
+                fileContent = mainarea.getText();
+            }
+        } catch (IOException e) {
+
+        } finally {
+            fout.close();
+        }
+    }
+
+    public void SaveAs() {
+        PrintWriter fout = null;
+        int retval = -1;
+        try {
+            retval = jc.showSaveDialog(this);
+            if (retval == JFileChooser.APPROVE_OPTION) {
+                fout = new PrintWriter(new FileWriter(jc.getSelectedFile()));
+            }
+
+            String s = mainarea.getText();
+            StringTokenizer st;
+            st = new StringTokenizer(s, System.getProperty("line.separator"));
+            while (st.hasMoreElements()) {
+                fout.println(st.nextToken());
+            }
+            JOptionPane.showMessageDialog(rootPane, "File Saved");
+            fileContent = mainarea.getText();
+            filename = jc.getSelectedFile().getName();
+            setTitle(filename = jc.getSelectedFile().getName());
+        } catch (IOException e) {
+
+        } finally {
+            fout.close();
+        }
+    }
+
+    public void open() throws IOException {
+        try {
+            int retval = jc.showOpenDialog(this);
+            if (retval == JFileChooser.APPROVE_OPTION) {
+                mainarea.setText(null);
+                Reader in = new FileReader(jc.getSelectedFile());
+                char[] buff = new char[100000];
+                int nch;
+                while ((nch = in.read(buff, 0, buff.length)) != -1) {
+                    mainarea.append(new String(buff, 0, nch));
+                }
+            }
+        } catch (HeadlessException e) {
+
+        } catch (FileNotFoundException ex) {
+            Logger.getLogger(rahuldomala.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
+
+    public void open_new() throws IOException {
+        if (!mainarea.getText().equals("") && !mainarea.getText().equals(fileContent)) {
+            if (filename == null) {
+                int option = JOptionPane.showConfirmDialog(rootPane, " Do you want to save the changes?");
+                if (option == 0) {
+                    SaveAs();
+                    clear();
+                } else if (option == 2) {
+
+                } else {
+                    clear();
+                }
+            } else {
+                int option = JOptionPane.showConfirmDialog(rootPane, " Do you want to save the changes?");
+                if (option == 0) {
+                    save();
+                    clear();
+                } else if (option == 2) {
+
+                } else {
+                    clear();
+                }
+            }
+        } else {
+            clear();
+        }
+    }
+
+    public void clear() {
+        mainarea.setText("");
+        setTitle("Untitled-Notepad");
+        filename = null;
+        fileContent = null;
+    }
+
+    class UndoAction extends AbstractAction {
+
+        public UndoAction() {
+            super("Undo");
+            setEnabled(false);
+
+        }
+
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            try {
+                undo.undo();
+            } catch (CannotUndoException ae) {
+                ae.printStackTrace();
+            }
+            update();
+            redoAction.update();
+        }
+
+        protected void update() {
+            if (undo.canUndo()) {
+                setEnabled(true);
+                putValue(Action.NAME, "Undo");
+            }
+        }
+    }
+
+    class RedoAction extends AbstractAction {
+
+        public RedoAction() {
+            super("Redo");
+            setEnabled(false);
+
+        }
+
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            try {
+                undo.redo();
+            } catch (CannotRedoException ae) {
+                ae.printStackTrace();
+            }
+            update();
+            undoAction.update();
+        }
+
+        protected void update() {
+            if (undo.canRedo()) {
+                setEnabled(true);
+                putValue(Action.NAME, "Redo");
+            }
+        }
+    }
+
+    public static void main(String[] args) {
+        rahuldomala ps = new rahuldomala();
+    }
+   public static JTextArea getArea(){
+       return mainarea;
+   }
+
+    private void Save() {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+}
